@@ -1,6 +1,6 @@
 import { Property, PropertyApiFilters, ApiResponse } from "@/types/property";
 
-const API_BASE_URL = "http://localhost:5033/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "https://millon-test.onrender.com/api";
 
 export class PropertyService {
   static async getProperties(filters: PropertyApiFilters = {}): Promise<ApiResponse<Property>> {
