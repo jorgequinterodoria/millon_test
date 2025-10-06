@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/collapsible";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Search, DollarSign, MapPin, ArrowUpDown, X, Grid3X3, Filter, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 
 interface PropertyFiltersProps {
   filters: Filters;
@@ -37,25 +37,25 @@ export const PropertyFilters = ({
   const [localMinPrice, setLocalMinPrice] = useState<string>("");
   const [localMaxPrice, setLocalMaxPrice] = useState<string>("");
 
-  const handleNameChange = (value: string) => {
+  const handleNameChange = useCallback((value: string) => {
     onFiltersChange({ ...filters, name: value });
-  };
+  }, [filters, onFiltersChange]);
 
-  const handleAddressChange = (value: string) => {
+  const handleAddressChange = useCallback((value: string) => {
     onFiltersChange({ ...filters, address: value });
-  };
+  }, [filters, onFiltersChange]);
 
-  const handleSortChange = (value: string) => {
+  const handleSortChange = useCallback((value: string) => {
     const sortValue = value === "none" ? "" : value;
     onFiltersChange({ ...filters, sortBy: sortValue as Filters['sortBy'] });
-  };
+  }, [filters, onFiltersChange]);
 
-  const handlePageSizeChange = (value: string) => {
+  const handlePageSizeChange = useCallback((value: string) => {
     const pageSize = parseInt(value);
     onFiltersChange({ ...filters, pageSize, pageNumber: 1 });
-  };
+  }, [filters, onFiltersChange]);
 
-  const handleClearFilters = () => {
+  const handleClearFilters = useCallback(() => {
     setLocalMinPrice("");
     setLocalMaxPrice("");
     onFiltersChange({
@@ -67,9 +67,9 @@ export const PropertyFilters = ({
       pageNumber: 1,
       pageSize: 10
     });
-  };
+  }, [onFiltersChange]);
 
-  const handleApplyFiltersWithPrices = () => {
+  const handleApplyFiltersWithPrices = useCallback(() => {
     const minPrice = localMinPrice === "" ? undefined : parseFloat(localMinPrice);
     const maxPrice = localMaxPrice === "" ? undefined : parseFloat(localMaxPrice);
     
@@ -80,15 +80,15 @@ export const PropertyFilters = ({
     });
     
     onApplyFilters();
-  };
+  }, [filters, localMinPrice, localMaxPrice, onFiltersChange, onApplyFilters]);
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleApplyFiltersWithPrices();
     }
-  };
+  }, [handleApplyFiltersWithPrices]);
   
-  const getActiveFiltersCount = () => {
+  const getActiveFiltersCount = useMemo(() => {
     let count = 0;
     if (filters.name) count++;
     if (filters.address) count++;
@@ -96,9 +96,9 @@ export const PropertyFilters = ({
     if (filters.maxPrice !== undefined || localMaxPrice !== "") count++;
     if (filters.sortBy) count++;
     return count;
-  };
+  }, [filters, localMinPrice, localMaxPrice]);
 
-  const FiltersContent = () => (
+  const filtersContent = useMemo(() => (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
         {/* Search by name */}
@@ -242,7 +242,19 @@ export const PropertyFilters = ({
         </div>
       </div>
     </>
-  );
+  ), [
+    filters,
+    localMinPrice,
+    localMaxPrice,
+    loading,
+    handleNameChange,
+    handleAddressChange,
+    handleKeyPress,
+    handleSortChange,
+    handlePageSizeChange,
+    handleApplyFiltersWithPrices,
+    handleClearFilters
+  ]);
 
   if (isMobile) {
     return (
@@ -257,9 +269,9 @@ export const PropertyFilters = ({
                 <Filter className="w-5 h-5" />
                 <span className="font-medium">
                   Filters
-                  {getActiveFiltersCount() > 0 && (
+                  {getActiveFiltersCount > 0 && (
                     <span className="ml-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
-                      {getActiveFiltersCount()}
+                      {getActiveFiltersCount}
                     </span>
                   )}
                 </span>
@@ -272,7 +284,7 @@ export const PropertyFilters = ({
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent className="px-6 pb-6">
-            <FiltersContent />
+            {filtersContent}
           </CollapsibleContent>
         </Collapsible>
       </div>
@@ -281,7 +293,7 @@ export const PropertyFilters = ({
 
   return (
     <div className="bg-card rounded-lg border border-border p-6 mb-8 shadow-soft">
-      <FiltersContent />
+      {filtersContent}
     </div>
   );
 };
